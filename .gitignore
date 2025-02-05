@@ -1,1 +1,3 @@
-/risk-model/results/*
+risk-model/results/*
+risk-model/**/*/__pycache__
+risk-model/**/*/__init__.py
