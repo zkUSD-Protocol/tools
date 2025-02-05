@@ -1,4 +1,4 @@
-from config import SIMULATION_PARAMS
+from config.params import SIMULATION_PARAMS
 
 
 def calculate_health_factor(collateral_amount, debt_amount, price):
@@ -19,16 +19,24 @@ def get_health_status(health_factor, is_liquidated=False):
     """Determine status based on health factor"""
     if is_liquidated:
         return "LIQUIDATED"
+    elif health_factor >= 200:
+        return "VERY HEALTHY"
     elif health_factor >= 150:
         return "HEALTHY"
+    elif health_factor >= 120:
+        return "CAUTION"
     elif health_factor >= 100:
-        return "AT RISK"
+        return "HIGH RISK"
     else:
         return "LIQUIDATABLE"
 
 
-def get_protocol_status(health_factor):
+def get_protocol_status(health_factor, open_vaults):
     """Determine protocol-wide status based on health factor"""
+
+    if open_vaults == 0:
+        return "SUCCESSFULLY LIQUIDATED POSITIONS"
+
     if health_factor >= 200:
         return "VERY HEALTHY"
     elif health_factor >= 150:

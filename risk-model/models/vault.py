@@ -1,19 +1,24 @@
-from config import SIMULATION_PARAMS
+from config.params import SIMULATION_PARAMS
 from utils import calculate_health_factor, calculate_max_allowed_debt, get_health_status
 import numpy as np
 
 
 class Vault:
-    def __init__(self):
+    def __init__(self, params=None):
+        """Initialize the vault with optional scenario parameters"""
+        self.params = SIMULATION_PARAMS.copy()
+        if params:
+            self.params.update(params)
+
         # Generate random collateral amount using normal distribution
         self.collateral_amount = max(1000, round(np.random.normal(
-            loc=SIMULATION_PARAMS['mean_collateral_amount'],
-            scale=SIMULATION_PARAMS['mean_collateral_amount'] * 1
+            loc=self.params['mean_collateral_amount'],
+            scale=self.params['mean_collateral_amount'] * 1
         )))
         # Generate random health factor between min and max
         self.initial_health_factor = np.random.uniform(
-            SIMULATION_PARAMS['min_health_factor'],
-            SIMULATION_PARAMS['max_health_factor']
+            self.params['min_health_factor'],
+            self.params['max_health_factor']
         )
         # Calculate debt amount based on health factor and starting price
         self.debt_amount = self.calculate_initial_debt_amount()
@@ -28,7 +33,7 @@ class Vault:
         return self.debt_amount
 
     def calculate_initial_debt_amount(self):
-        price = SIMULATION_PARAMS['start_price']
+        price = self.params['start_price']
         max_allowed_debt = calculate_max_allowed_debt(
             self.collateral_amount * price)
         return max_allowed_debt / (self.initial_health_factor / 100)

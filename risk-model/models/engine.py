@@ -1,18 +1,24 @@
 from collections import deque
 import numpy as np
 from .vault import Vault
-from config import SIMULATION_PARAMS
+from config.params import SIMULATION_PARAMS
 
 
 class Engine:
-    def __init__(self):
+    def __init__(self, params=None):
+        """Initialize the engine with optional scenario parameters"""
+        self.params = SIMULATION_PARAMS.copy()
+        if params:
+            self.params.update(params)
+
         self.vaults = []
-        self.current_price = SIMULATION_PARAMS['start_price']
-        self.liquidation_queue = deque()  # Queue for vaults pending liquidation
-        self.max_liquidations_per_step = SIMULATION_PARAMS['txs_per_block']
+        self.current_price = self.params['start_price']
+        self.liquidation_queue = deque()
+        self.max_liquidations_per_step = self.params['txs_per_block']
 
     def create_vaults(self):
-        self.vaults = [Vault() for _ in range(SIMULATION_PARAMS['num_vaults'])]
+        self.vaults = [Vault(self.params)
+                       for _ in range(self.params['num_vaults'])]
 
     def get_vaults(self):
         return self.vaults
@@ -39,10 +45,18 @@ class Engine:
     def check_and_queue_liquidations(self):
         # Check all vaults and queue those that need liquidation
         newly_queued = 0
+        already_queued = set(self.liquidation_queue)
+
         for vault in self.vaults:
-            if (vault.calculate_health_factor(self.current_price) <
-                SIMULATION_PARAMS['health_factor_liquidation_threshold'] and
-                    vault.get_collateral_amount() > 0):  # Only queue if not already liquidated
+            # Only queue if:
+            # 1. Vault is not already in queue
+            # 2. Vault has collateral remaining
+            # 3. Vault's health factor is below liquidation threshold
+            if (vault not in already_queued and
+                vault.get_collateral_amount() > 0 and
+                vault.calculate_health_factor(self.current_price) <
+                    self.params['health_factor_liquidation_threshold']):
+
                 self.liquidation_queue.append(vault)
                 newly_queued += 1
         return newly_queued
