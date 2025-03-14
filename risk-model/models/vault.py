@@ -1,6 +1,7 @@
 from config.params import SIMULATION_PARAMS
 from utils import calculate_health_factor, calculate_max_allowed_debt, get_health_status
 import numpy as np
+from scipy import stats
 
 
 class Vault:
@@ -15,11 +16,26 @@ class Vault:
             loc=self.params['mean_collateral_amount'],
             scale=self.params['mean_collateral_amount'] * 1
         )))
-        # Generate random health factor between min and max
-        self.initial_health_factor = np.random.uniform(
-            self.params['min_health_factor'],
-            self.params['max_health_factor']
-        )
+
+        # Get health factor distribution parameters
+        mean_hf = self.params.get('health_factor_mean', 150)
+        std_hf = self.params.get('health_factor_std', 30)
+        # Absolute minimum (safety)
+        min_hf = self.params.get('min_health_factor', 105)
+
+        # Use log-normal distribution for right-skewed health factors
+        # Convert normal mean/std to log-normal parameters
+        # For log-normal: median = exp(mu)
+        # We'll set the median of our log-normal to our desired mean
+        phi = std_hf / mean_hf  # Coefficient of variation
+        sigma = np.sqrt(np.log(1 + phi**2))
+        mu = np.log(mean_hf) - 0.5 * sigma**2
+
+        # Generate health factor using log-normal distribution
+        # This creates a right-skewed distribution with the specified mean
+        self.initial_health_factor = max(
+            min_hf, stats.lognorm.rvs(s=sigma, scale=np.exp(mu)))
+
         # Calculate debt amount based on health factor and starting price
         self.debt_amount = self.calculate_initial_debt_amount()
 
