@@ -22,7 +22,3 @@ _More tools will be added here as they are developed._
 ## Getting Started
 
 Each tool has its own README file with specific instructions for installation, configuration, and usage.
-
-## Contributing
-
-If you'd like to contribute a new tool or improve an existing one, please follow the project's contribution guidelines.
